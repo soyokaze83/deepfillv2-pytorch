@@ -26,7 +26,7 @@ d_lr: 0.0001 # lr for Adam optimizer (discriminator)
 d_beta1: 0.5 # beta1 for Adam optimizer (discriminator)
 d_beta2: 0.999 # beta2 for Adam optimizer (discriminator)
 
-max_iters: 5000 # number of batches to train the models
+max_iters: 50000 # number of batches to train the models
 
 # logging
 viz_max_out: 10 # number of images from batch
