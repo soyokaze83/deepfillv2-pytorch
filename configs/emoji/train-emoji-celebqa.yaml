@@ -1,9 +1,9 @@
 # resume training
-model_restore: "" # Start new training
+model_restore: "drive/MyDrive/computer-vision/pretrained/states_pt_celebahq.pth" # Start new training
 #model_restore: 'checkpoints/celebahq/model_exp0/states.pth'
 
 # dataloading
-dataset_path: "drive/MyDrive/computer-vision/dataset"
+dataset_path: "/kaggle/input/balihill-inpainting/deepfillganv2/dataset"
 scan_subdirs: False # Are the images organized in subfolders?
 random_crop: False # Set to false when dataset is 'celebahq', meaning only resize the images to img_shapes, instead of crop img_shapes from a larger raw image. This is useful when you train on images with different resolutions like places2. In these cases, please set random_crop to true.
 random_horizontal_flip: False
@@ -12,8 +12,8 @@ num_workers: 0
 
 # training
 tb_logging: True # Enable Tensorboard logging?
-log_dir: "tb_logs/emoji/model_exp0" # Tensorboard logging folder
-checkpoint_dir: "checkpoints/emoji/model_exp0" # Checkpoint folder
+log_dir: "tb_logs/emoji/model_exp1" # Tensorboard logging folder
+checkpoint_dir: "checkpoints/emoji/model_exp1" # Checkpoint folder
 
 use_cuda_if_available: True
 random_seed: 42 # options: False | <int>
@@ -26,7 +26,7 @@ d_lr: 0.0001 # lr for Adam optimizer (discriminator)
 d_beta1: 0.5 # beta1 for Adam optimizer (discriminator)
 d_beta2: 0.999 # beta2 for Adam optimizer (discriminator)
 
-max_iters: 1000000 # number of batches to train the models
+max_iters: 5000 # number of batches to train the models
 
 # logging
 viz_max_out: 10 # number of images from batch
