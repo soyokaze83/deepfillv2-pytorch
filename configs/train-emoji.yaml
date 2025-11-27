@@ -3,7 +3,7 @@ model_restore: "" # Start new training
 #model_restore: 'checkpoints/celebahq/model_exp0/states.pth'
 
 # dataloading
-dataset_path: "dataset"
+dataset_path: "drive/MyDrive/computer-vision/dataset"
 scan_subdirs: False # Are the images organized in subfolders?
 random_crop: False # Set to false when dataset is 'celebahq', meaning only resize the images to img_shapes, instead of crop img_shapes from a larger raw image. This is useful when you train on images with different resolutions like places2. In these cases, please set random_crop to true.
 random_horizontal_flip: False
