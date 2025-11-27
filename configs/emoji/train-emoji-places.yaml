@@ -1,5 +1,5 @@
 # resume training
-model_restore: "/kaggle/input/balihill-inpainting/pt_deepfillganv2/pretrained/states_pt_celebahq.pth" # Start new training
+model_restore: "/kaggle/input/balihill-inpainting/pt_deepfillganv2/pretrained/states_pt_places2.pth" # Start new training
 #model_restore: 'checkpoints/celebahq/model_exp0/states.pth'
 
 # dataloading
