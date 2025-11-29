@@ -101,6 +101,7 @@ def training_loop(
         # update D parameters
         d_optimizer.zero_grad()
         losses["d_loss"].backward()
+        torch.nn.utils.clip_grad_norm_(discriminator.parameters(), max_norm=1.0)
         d_optimizer.step()
 
         # G training steps:
@@ -128,6 +129,7 @@ def training_loop(
         # update G parameters
         g_optimizer.zero_grad()
         losses["g_loss"].backward()
+        torch.nn.utils.clip_grad_norm_(generator.parameters(), max_norm=1.0)
         g_optimizer.step()
 
         # LOGGING
