@@ -184,9 +184,9 @@ def brush_stroke_mask(config):
             )
 
     if np.random.normal() > 0:
-        mask.transpose(Image.FLIP_LEFT_RIGHT)
+        mask = mask.transpose(Image.FLIP_LEFT_RIGHT)
     if np.random.normal() > 0:
-        mask.transpose(Image.FLIP_TOP_BOTTOM)
+        mask = mask.transpose(Image.FLIP_TOP_BOTTOM)
     mask = np.asarray(mask, np.float32)
     mask = np.reshape(mask, (1, 1, H, W))
     return torch.Tensor(mask)
