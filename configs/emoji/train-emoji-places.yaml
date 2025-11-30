@@ -37,7 +37,7 @@ save_imgs_to_tb_iter: 500 # (optional) add image grids to tensorboard
 save_imgs_to_disc_iter: 500 # (optional) save image grids in checkpoint folder
 save_cp_backup_iter: 5000 # (optional) save checkpoint file named states_{n_iter}.pth
 
-img_shapes: [16, 16, 3]
+img_shapes: [64, 64, 3]
 
 # mask options
 height: 8

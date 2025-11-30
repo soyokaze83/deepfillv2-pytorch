@@ -134,8 +134,8 @@ def brush_stroke_mask(config):
     """
     min_num_vertex = 4
     max_num_vertex = 12
-    min_width = 2
-    max_width = 4
+    min_width = 4
+    max_width = 12
 
     mean_angle = 2 * np.pi / 5
     angle_range = 2 * np.pi / 15
