@@ -22,11 +22,11 @@ g_lr: 0.0001 # lr for Adam optimizer (generator)
 g_beta1: 0.5 # beta1 for Adam optimizer (generator)
 g_beta2: 0.999 # beta2 for Adam optimizer (generator)
 
-d_lr: 0.0001 # lr for Adam optimizer (discriminator)
+d_lr: 0.00004 # lr for Adam optimizer (discriminator)
 d_beta1: 0.5 # beta1 for Adam optimizer (discriminator)
 d_beta2: 0.999 # beta2 for Adam optimizer (discriminator)
 
-max_iters: 5000000 # number of batches to train the models
+max_iters: 500000 # number of batches to train the models
 
 # logging
 viz_max_out: 10 # number of images from batch
@@ -37,15 +37,15 @@ save_imgs_to_tb_iter: 500 # (optional) add image grids to tensorboard
 save_imgs_to_disc_iter: 500 # (optional) save image grids in checkpoint folder
 save_cp_backup_iter: 5000 # (optional) save checkpoint file named states_{n_iter}.pth
 
-img_shapes: [16, 16, 3]
+img_shapes: [64, 64, 3]
 
 # mask options
-height: 8
-width: 8
-max_delta_height: 4
-max_delta_width: 4
-vertical_margin: 0
-horizontal_margin: 0
+height: 32 # ~50% of image height
+width: 32 # ~50% of image width
+max_delta_height: 16
+max_delta_width: 16
+vertical_margin: 8
+horizontal_margin: 8
 
 # loss
 gan_loss: "hinge" # options: 'hinge', 'ls'
