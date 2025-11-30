@@ -101,10 +101,14 @@ def training_loop(
         # update D parameters
         d_optimizer.zero_grad()
         losses["d_loss"].backward()
-        torch.nn.utils.clip_grad_norm_(discriminator.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(discriminator.parameters(), max_norm=0.5)
         d_optimizer.step()
 
         # G training steps:
+        # Clamp generator outputs to prevent NaN propagation
+        x1 = torch.clamp(x1, -1.0, 1.0)
+        x2 = torch.clamp(x2, -1.0, 1.0)
+
         losses["ae_loss1"] = config.l1_loss_alpha * torch.mean(
             (torch.abs(batch_real - x1))
         )
@@ -126,10 +130,15 @@ def training_loop(
         if config.ae_loss:
             losses["g_loss"] += losses["ae_loss"]
 
+        # Skip update if NaN detected
+        if torch.isnan(losses["g_loss"]) or torch.isinf(losses["g_loss"]):
+            print(f"Warning: NaN/Inf detected in g_loss at iter {n_iter}, skipping update")
+            continue
+
         # update G parameters
         g_optimizer.zero_grad()
         losses["g_loss"].backward()
-        torch.nn.utils.clip_grad_norm_(generator.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(generator.parameters(), max_norm=0.5)
         g_optimizer.step()
 
         # LOGGING
