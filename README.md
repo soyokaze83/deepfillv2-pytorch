@@ -1,65 +1,96 @@
-# deepfillv2-pytorch
-A PyTorch reimplementation of the paper **Free-Form Image Inpainting with Gated Convolution** (DeepFillv2) (https://arxiv.org/abs/1806.03589) based on the [original TensorFlow implementation](https://github.com/JiahuiYu/generative_inpainting/tree/v2.0.0).
+# DeepFillv2 - Emoji Inpainting
 
-Example images (raw | masked | inpainted):
+Repository ini merupakan fork dari [nipponjo/deepfillv2-pytorch](https://github.com/nipponjo/deepfillv2-pytorch) yang digunakan untuk tugas kelompok mata kuliah Computer Vision. Fork ini hanya mengambil arsitektur model DeepFillGANv2 serta menggunakan `train.py` untuk melakukan training berdasarkan konfigurasi yang telah ditentukan dan `test.py` untuk melakukan inference.
 
-<div align="center">
-  <img src="https://github.com/nipponjo/deepfillv2-pytorch/blob/master/examples/inpaint/case1.png" width="30%"> <img src="https://github.com/nipponjo/deepfillv2-pytorch/blob/master/examples/inpaint/case1_masked.png" width="30%"> <img src="https://github.com/nipponjo/deepfillv2-pytorch/blob/master/examples/inpaint/case1_out.png" width="30%">
-  <img src="https://github.com/nipponjo/deepfillv2-pytorch/blob/master/examples/inpaint/case2.png" width="30%"> <img src="https://github.com/nipponjo/deepfillv2-pytorch/blob/master/examples/inpaint/case2_masked.png" width="30%"> <img src="https://github.com/nipponjo/deepfillv2-pytorch/blob/master/examples/inpaint/case2_out.png" width="30%">
-  <img src="https://github.com/nipponjo/deepfillv2-pytorch/blob/master/examples/inpaint/case3.png" width="30%"> <img src="https://github.com/nipponjo/deepfillv2-pytorch/blob/master/examples/inpaint/case3_masked.png" width="30%"> <img src="https://github.com/nipponjo/deepfillv2-pytorch/blob/master/examples/inpaint/case3_out.png" width="30%">
-</div>
+## Struktur Direktori
 
-
-## Pretrained models
-The models in `networks_tf.py` can be used with the weights from the [official repository](https://github.com/JiahuiYu/generative_inpainting/tree/v2.0.0#pretrained-models), which I have converted to PyTorch state dicts. 
-
-Download converted weights: [Places2](https://drive.google.com/u/0/uc?id=1tvdQRmkphJK7FYveNAKSMWC6K09hJoyt&export=download) | [CelebA-HQ](https://drive.google.com/u/0/uc?id=1fTQVSKWwWcKYnmeemxKWImhVtFQpESmm&export=download) (for `networks_tf.py`)
-
-The networks in `networks_tf.py` use TensorFlow-compatibility functions (padding, down-sampling), while the networks in `networks.py` do not. In order to adjust the weights to the different settings, the model was trained on Places2/CelebA-HQ for some time using the pretrained weights as initialization.
-
-Download fine-tuned weights: [Places2](https://drive.google.com/u/0/uc?id=1L63oBNVgz7xSb_3hGbUdkYW1IuRgMkCa&export=download) | [CelebA-HQ](https://drive.google.com/u/0/uc?id=17oJ1dJ9O3hkl2pnl8l2PtNVf2WhSDtB7&export=download) (for `networks.py`)
-
-
-## Test the model
-Before running the following commands make sure to put the downloaded weights file into the `pretrained` folder.
-```bash
-python test.py --image examples/inpaint/case1.png --mask examples/inpaint/case1_mask.png --out examples/inpaint/case1_out_test.png --checkpoint pretrained/states_tf_places2.pth
+```
+deepfillv2-pytorch/
+├── configs/
+│   └── emoji/                  # Konfigurasi training untuk emoji inpainting
+│       ├── train-emoji-no_ft.yaml
+│       ├── train-emoji-places.yaml
+│       └── train-emoji-celebqa.yaml
+├── notebooks/                  # Notebook untuk training di Kaggle
+│   ├── cv_deepfillganv2.ipynb
+│   └── cv-deepfillganv2-kaggle.ipynb
+├── scripts/                    # Script evaluasi dan visualisasi
+│   ├── compute_l1.py
+│   ├── compute_psnr.py
+│   ├── compute_ssim.py
+│   ├── visualize_predictions.py
+│   └── visualize_deepfillv2_loss.py
+├── pretrained/                 # Model checkpoint hasil training
+├── test.py                     # Script inference
+├── train.py                    # Script training
+└── run_inference.ps1           # PowerShell script untuk inference & evaluasi
 ```
 
-The [Jupyter](https://jupyter.org/) notebook `test.ipynb` shows how the model can be used.
+## Konfigurasi
 
-## Train the model
-Train with options from a config file:
+Konfigurasi training yang digunakan untuk tugas ini terletak di dalam direktori `configs/emoji/`. Terdapat 3 variasi konfigurasi:
+
+- `train-emoji-no_ft.yaml` - Training dari scratch tanpa fine-tuning
+- `train-emoji-places.yaml` - Fine-tuning dari model pre-trained Places2
+- `train-emoji-celebqa.yaml` - Fine-tuning dari model pre-trained CelebA-HQ
+
+## Training
+
+Training dilakukan di environment Kaggle menggunakan notebook yang tersedia di direktori `notebooks/`. Notebook utama yang digunakan adalah `cv-deepfillganv2-kaggle.ipynb`.
+
+Untuk menjalankan training secara lokal:
+
 ```bash
-python train.py --config configs/train.yaml
+python train.py --config configs/emoji/train-emoji-no_ft.yaml
 ```
 
-Run `tensorboard --logdir <your_log_dir>` to see the [TensorBoard](https://pytorch.org/docs/stable/tensorboard.html) logging.
+## Inference & Evaluasi
 
-  
-## Demo web app
-The web app uses a JS/React frontend and a FastAPI backend. To run it you need the following packages:
-  + fastapi, python-multipart: for the backend api
-  + uvicorn: for serving the app
- 
- Install with:
-  `pip install fastapi python-multipart "uvicorn[standard]"`
- 
-Run with:
- `python app.py`
- 
-New models can be added in `app/models.yaml`
-  
-  <div align="center">
-    <img src="https://user-images.githubusercontent.com/28433296/179576283-bff8a7ef-b594-4a5e-8389-1bbd70fe6c1f.png" width="66%">  
-  </div>
+Untuk menjalankan inference sekaligus evaluasi, gunakan PowerShell script `run_inference.ps1`:
 
+```powershell
+# Pilih model secara interaktif
+.\run_inference.ps1
 
-## Requirements
-  + python3
-  + pytorch
-  + torchvision
-  + numpy
-  + Pillow
-  + tensorboard
-  + pyyaml
+# Atau spesifikasikan path model secara langsung
+.\run_inference.ps1 -ModelPath "pretrained/states_emoji_no-ft-50000.pth"
+
+# Atau gunakan index model
+.\run_inference.ps1 -ModelIndex 0
+```
+
+Script ini akan:
+1. Menjalankan inference menggunakan `test.py` pada semua gambar di direktori test
+2. Menghitung metrik evaluasi (L1, PSNR, SSIM) menggunakan script di `scripts/`
+3. Menyimpan hasil prediksi dan metrik evaluasi
+
+### Metrik Evaluasi
+
+Script evaluasi yang tersedia:
+- `scripts/compute_l1.py` - Menghitung L1 loss (Mean Absolute Error)
+- `scripts/compute_psnr.py` - Menghitung Peak Signal-to-Noise Ratio
+- `scripts/compute_ssim.py` - Menghitung Structural Similarity Index
+
+Setiap metrik dihitung untuk:
+- **Full Image** - Seluruh area gambar
+- **Masked Region** - Hanya area yang di-inpaint
+
+## Visualisasi
+
+### Visualisasi Prediksi
+
+Untuk membuat perbandingan side-by-side antara gambar original, erased, dan hasil inpainting:
+
+```bash
+python scripts/visualize_predictions.py \
+    --test-dir examples/emoji/triplets_OTI \
+    --pred-dir predictions_states_emoji_no-ft-50000 \
+    --output comparison.png
+```
+
+Script ini berfungsi untuk kedua OTI dan HTI.
+
+## Referensi
+
+- Paper: [Free-Form Image Inpainting with Gated Convolution](https://arxiv.org/abs/1806.03589)
+- Original Repository: [nipponjo/deepfillv2-pytorch](https://github.com/nipponjo/deepfillv2-pytorch)
