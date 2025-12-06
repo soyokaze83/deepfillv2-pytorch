@@ -94,3 +94,10 @@ Script ini berfungsi untuk kedua OTI dan HTI.
 
 - Paper: [Free-Form Image Inpainting with Gated Convolution](https://arxiv.org/abs/1806.03589)
 - Original Repository: [nipponjo/deepfillv2-pytorch](https://github.com/nipponjo/deepfillv2-pytorch)
+
+## Contributors
+
+- Vincent Suhardi - 2206082505
+- Fadhil Muhammad - 2206083464
+- Venedict Chen - 2206024436
+- Edbert Halim - 2206813795
