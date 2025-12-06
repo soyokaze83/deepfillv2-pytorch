@@ -1,6 +1,6 @@
 
 # SAMPLE COMMAND
-# .\run_inference.ps1 -ModelPath "pretrained/states_emoji_celebahq_5000.pth"
+# .\run_inference.ps1 -ModelPath "pretrained/states_emoji_no-ft-50000.pth"
 
 param(
     [int]$ModelIndex = -1,
@@ -8,7 +8,7 @@ param(
 )
 
 # === CONFIGURATION (Easy to change) ===
-$testBaseDir = "examples/emoji/open_test"  # Change this for different test sets
+$testBaseDir = "examples/emoji/triplets_HTI"  # Change this for different test sets
 
 # === MODEL SELECTION ===
 $models = Get-ChildItem -Path "pretrained" -Filter "*.pth" | Sort-Object Name
@@ -54,7 +54,7 @@ Write-Host ""
 
 # === SETUP ===
 $outputDir = "predictions_$modelName"
-$metricsFile = "$outputDir/evaluation_metrics.txt"
+$metricsFile = "$outputDir/evaluation_metrics_oti.txt"
 
 # Create output directory
 if (-not (Test-Path $outputDir)) {
@@ -108,9 +108,9 @@ foreach ($erased in $erasedImages) {
     Write-Host "[$current/$totalImages] Evaluating: $baseName" -ForegroundColor Yellow
 
     # Compute L1
-    $l1Output = python compute_l1.py --pred $predPath --orig $origPath --mask $maskPath
+    $l1Output = python ./scripts/compute_l1.py --pred $predPath --orig $origPath --mask $maskPath
 
-    # Parse output
+    # Parse L1 output
     $l1Full = 0.0
     $l1Masked = 0.0
     foreach ($line in $l1Output) {
@@ -121,10 +121,42 @@ foreach ($erased in $erasedImages) {
         }
     }
 
+    # Compute PSNR
+    $psnrOutput = python ./scripts/compute_psnr.py --pred $predPath --orig $origPath --mask $maskPath
+
+    # Parse PSNR output
+    $psnrFull = 0.0
+    $psnrMasked = 0.0
+    foreach ($line in $psnrOutput) {
+        if ($line -match "^full:(.+)$") {
+            $psnrFull = [double]$Matches[1]
+        } elseif ($line -match "^masked:(.+)$") {
+            $psnrMasked = [double]$Matches[1]
+        }
+    }
+
+    # Compute SSIM
+    $ssimOutput = python ./scripts/compute_ssim.py --pred $predPath --orig $origPath --mask $maskPath
+
+    # Parse SSIM output
+    $ssimFull = 0.0
+    $ssimMasked = 0.0
+    foreach ($line in $ssimOutput) {
+        if ($line -match "^full:(.+)$") {
+            $ssimFull = [double]$Matches[1]
+        } elseif ($line -match "^masked:(.+)$") {
+            $ssimMasked = [double]$Matches[1]
+        }
+    }
+
     $results += [PSCustomObject]@{
         Name = $baseName
         L1Full = $l1Full
         L1Masked = $l1Masked
+        PSNRFull = $psnrFull
+        PSNRMasked = $psnrMasked
+        SSIMFull = $ssimFull
+        SSIMMasked = $ssimMasked
     }
 }
 
@@ -133,18 +165,8 @@ Write-Host "Evaluation completed." -ForegroundColor Green
 Write-Host ""
 
 # === COMPUTE STATISTICS ===
-$l1FullValues = $results | ForEach-Object { $_.L1Full }
-$l1MaskedValues = $results | ForEach-Object { $_.L1Masked }
 
-$meanFull = ($l1FullValues | Measure-Object -Average).Average
-$minFull = ($l1FullValues | Measure-Object -Minimum).Minimum
-$maxFull = ($l1FullValues | Measure-Object -Maximum).Maximum
-
-$meanMasked = ($l1MaskedValues | Measure-Object -Average).Average
-$minMasked = ($l1MaskedValues | Measure-Object -Minimum).Minimum
-$maxMasked = ($l1MaskedValues | Measure-Object -Maximum).Maximum
-
-# Compute standard deviation
+# Compute standard deviation helper function
 function Get-StdDev($values) {
     $mean = ($values | Measure-Object -Average).Average
     $sumSquares = 0
@@ -154,52 +176,99 @@ function Get-StdDev($values) {
     return [Math]::Sqrt($sumSquares / $values.Count)
 }
 
-$stdFull = Get-StdDev $l1FullValues
-$stdMasked = Get-StdDev $l1MaskedValues
+# L1 statistics
+$l1FullValues = $results | ForEach-Object { $_.L1Full }
+$l1MaskedValues = $results | ForEach-Object { $_.L1Masked }
+
+$l1MeanFull = ($l1FullValues | Measure-Object -Average).Average
+$l1MinFull = ($l1FullValues | Measure-Object -Minimum).Minimum
+$l1MaxFull = ($l1FullValues | Measure-Object -Maximum).Maximum
+$l1StdFull = Get-StdDev $l1FullValues
+
+$l1MeanMasked = ($l1MaskedValues | Measure-Object -Average).Average
+$l1MinMasked = ($l1MaskedValues | Measure-Object -Minimum).Minimum
+$l1MaxMasked = ($l1MaskedValues | Measure-Object -Maximum).Maximum
+$l1StdMasked = Get-StdDev $l1MaskedValues
+
+# PSNR statistics
+$psnrFullValues = $results | ForEach-Object { $_.PSNRFull }
+$psnrMaskedValues = $results | ForEach-Object { $_.PSNRMasked }
+
+$psnrMeanFull = ($psnrFullValues | Measure-Object -Average).Average
+$psnrMinFull = ($psnrFullValues | Measure-Object -Minimum).Minimum
+$psnrMaxFull = ($psnrFullValues | Measure-Object -Maximum).Maximum
+$psnrStdFull = Get-StdDev $psnrFullValues
+
+$psnrMeanMasked = ($psnrMaskedValues | Measure-Object -Average).Average
+$psnrMinMasked = ($psnrMaskedValues | Measure-Object -Minimum).Minimum
+$psnrMaxMasked = ($psnrMaskedValues | Measure-Object -Maximum).Maximum
+$psnrStdMasked = Get-StdDev $psnrMaskedValues
+
+# SSIM statistics
+$ssimFullValues = $results | ForEach-Object { $_.SSIMFull }
+$ssimMaskedValues = $results | ForEach-Object { $_.SSIMMasked }
+
+$ssimMeanFull = ($ssimFullValues | Measure-Object -Average).Average
+$ssimMinFull = ($ssimFullValues | Measure-Object -Minimum).Minimum
+$ssimMaxFull = ($ssimFullValues | Measure-Object -Maximum).Maximum
+$ssimStdFull = Get-StdDev $ssimFullValues
+
+$ssimMeanMasked = ($ssimMaskedValues | Measure-Object -Average).Average
+$ssimMinMasked = ($ssimMaskedValues | Measure-Object -Minimum).Minimum
+$ssimMaxMasked = ($ssimMaskedValues | Measure-Object -Maximum).Maximum
+$ssimStdMasked = Get-StdDev $ssimMaskedValues
 
 # === WRITE METRICS FILE ===
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
 $metricsContent = @"
-===========================================
+===============================================================================================================
 Evaluation Results
-===========================================
+===============================================================================================================
 Model: $modelName
 Test Directory: $testBaseDir
 Date: $timestamp
 
 Per-Image Results:
-------------------------------------------
-Image                              L1 Full        L1 Masked
+---------------------------------------------------------------------------------------------------------------
+Image                              L1 Full    L1 Masked    PSNR Full  PSNR Masked    SSIM Full  SSIM Masked
 "@
 
 foreach ($r in $results | Sort-Object Name) {
     $nameFormatted = $r.Name.PadRight(30)
-    $fullFormatted = "{0,12:F6}" -f $r.L1Full
-    $maskedFormatted = "{0,12:F6}" -f $r.L1Masked
-    $metricsContent += "`n$nameFormatted $fullFormatted $maskedFormatted"
+    $l1FullFmt = "{0,10:F4}" -f $r.L1Full
+    $l1MaskedFmt = "{0,10:F4}" -f $r.L1Masked
+    $psnrFullFmt = "{0,10:F4}" -f $r.PSNRFull
+    $psnrMaskedFmt = "{0,10:F4}" -f $r.PSNRMasked
+    $ssimFullFmt = "{0,10:F6}" -f $r.SSIMFull
+    $ssimMaskedFmt = "{0,10:F6}" -f $r.SSIMMasked
+    $metricsContent += "`n$nameFormatted $l1FullFmt $l1MaskedFmt $psnrFullFmt $psnrMaskedFmt $ssimFullFmt $ssimMaskedFmt"
 }
 
 $metricsContent += @"
 
-------------------------------------------
+---------------------------------------------------------------------------------------------------------------
 
 Summary Statistics:
-------------------------------------------
-                                   L1 Full       L1 Masked
-Mean                        $("{0,12:F6}" -f $meanFull) $("{0,12:F6}" -f $meanMasked)
-Min                         $("{0,12:F6}" -f $minFull) $("{0,12:F6}" -f $minMasked)
-Max                         $("{0,12:F6}" -f $maxFull) $("{0,12:F6}" -f $maxMasked)
-Std Dev                     $("{0,12:F6}" -f $stdFull) $("{0,12:F6}" -f $stdMasked)
-Num Images                  $("{0,12}" -f $totalImages) $("{0,12}" -f $totalImages)
-===========================================
+---------------------------------------------------------------------------------------------------------------
+Metric              Full Image                              Masked Region
+                    Mean        Min         Max         Std         Mean        Min         Max         Std
+---------------------------------------------------------------------------------------------------------------
+L1              $("{0,10:F4}" -f $l1MeanFull) $("{0,10:F4}" -f $l1MinFull) $("{0,10:F4}" -f $l1MaxFull) $("{0,10:F4}" -f $l1StdFull)    $("{0,10:F4}" -f $l1MeanMasked) $("{0,10:F4}" -f $l1MinMasked) $("{0,10:F4}" -f $l1MaxMasked) $("{0,10:F4}" -f $l1StdMasked)
+PSNR            $("{0,10:F4}" -f $psnrMeanFull) $("{0,10:F4}" -f $psnrMinFull) $("{0,10:F4}" -f $psnrMaxFull) $("{0,10:F4}" -f $psnrStdFull)    $("{0,10:F4}" -f $psnrMeanMasked) $("{0,10:F4}" -f $psnrMinMasked) $("{0,10:F4}" -f $psnrMaxMasked) $("{0,10:F4}" -f $psnrStdMasked)
+SSIM            $("{0,10:F6}" -f $ssimMeanFull) $("{0,10:F6}" -f $ssimMinFull) $("{0,10:F6}" -f $ssimMaxFull) $("{0,10:F6}" -f $ssimStdFull)    $("{0,10:F6}" -f $ssimMeanMasked) $("{0,10:F6}" -f $ssimMinMasked) $("{0,10:F6}" -f $ssimMaxMasked) $("{0,10:F6}" -f $ssimStdMasked)
+---------------------------------------------------------------------------------------------------------------
+Num Images: $totalImages
+===============================================================================================================
 "@
 
 $metricsContent | Out-File -FilePath $metricsFile -Encoding UTF8
 
 Write-Host "=== Summary ===" -ForegroundColor Cyan
-Write-Host "Mean L1 Full:    $("{0:F4}" -f $meanFull)"
-Write-Host "Mean L1 Masked:  $("{0:F4}" -f $meanMasked)"
+Write-Host "                    Full Image       Masked Region"
+Write-Host "Mean L1:        $("{0,12:F4}" -f $l1MeanFull) $("{0,12:F4}" -f $l1MeanMasked)"
+Write-Host "Mean PSNR:      $("{0,12:F4}" -f $psnrMeanFull) $("{0,12:F4}" -f $psnrMeanMasked)"
+Write-Host "Mean SSIM:      $("{0,12:F6}" -f $ssimMeanFull) $("{0,12:F6}" -f $ssimMeanMasked)"
 Write-Host ""
 Write-Host "Predictions saved to: $outputDir/" -ForegroundColor Green
 Write-Host "Metrics saved to: $metricsFile" -ForegroundColor Green
